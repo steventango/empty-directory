@@ -1,7 +1,8 @@
 import argparse
-import os
 from datetime import datetime, timedelta
 import glob
+import logging
+import os
 import subprocess
 
 
@@ -21,9 +22,11 @@ def main():
                         help='dry run')
     args = parser.parse_args()
 
+    logging.basicConfig(filename='empty-directory.log', level=logging.DEBUG)
+    logging.getLogger().addHandler(logging.StreamHandler())
+
     paths = glob.glob(args.path[0] + '/**')
 
-    # parse start date from str to datetime
     start_date = datetime.strptime(args.start_date, '%Y-%m-%d') if args.start_date else None
 
     for path in paths:
@@ -32,7 +35,7 @@ def main():
         if start_date and date_time < start_date or datetime.now() - date_time < timedelta(days=args.days):
             continue
 
-        print(path)
+        logging.info(path)
         if args.dry_run:
             continue
         elif args.trash:
