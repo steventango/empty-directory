@@ -1,9 +1,9 @@
 import argparse
-from datetime import datetime, timedelta
 import glob
 import logging
 import os
 import subprocess
+from datetime import datetime, timedelta
 
 
 def main():
