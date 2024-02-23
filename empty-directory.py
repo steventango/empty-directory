@@ -2,13 +2,14 @@ import argparse
 import glob
 import logging
 import os
-import subprocess
 from datetime import datetime, timedelta
+
+from send2trash import send2trash
 
 
 def main():
     parser = argparse.ArgumentParser(description="Empty directory")
-    parser.add_argument("path", metavar="path", type=str, nargs="+", help="path to empty")
+    parser.add_argument("path", type=str, help="path to empty")
     parser.add_argument("--trash", action="store_true", help="move files to trash")
     parser.add_argument("--remove", action="store_true", help="remove files")
     parser.add_argument("--days", type=int, default=30, help="days to keep files")
@@ -16,24 +17,41 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="dry run")
     args = parser.parse_args()
 
-    logging.basicConfig(filename="empty-directory.log", level=logging.DEBUG, format="%(asctime)s %(message)s")
-    logging.getLogger().addHandler(logging.StreamHandler())
+    logging.basicConfig(
+        filename="empty-directory.log",
+        level=logging.DEBUG,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+    )
+    console = logging.StreamHandler()
+    console.setLevel(logging.WARNING)
+    logging.getLogger().addHandler(console)
 
-    paths = glob.glob(args.path[0] + "/**")
+    logging.info(args)
+
+    pathname = args.path + "/**"
+    logging.info(f"Searching {pathname}")
+    paths = glob.glob(pathname, recursive=True)
+    paths = sorted(paths, key=len, reverse=True)
+    if len(paths):
+        paths.pop()
+    logging.info(f"Found {len(paths)} files")
 
     start_date = datetime.strptime(args.start_date, "%Y-%m-%d") if args.start_date else None
 
     for path in paths:
         date_time = datetime.fromtimestamp(os.path.getmtime(path))
 
-        if start_date and date_time < start_date or datetime.now() - date_time < timedelta(days=args.days):
+        logging.info(f"{path} [{date_time}]")
+
+        if start_date and date_time < start_date or datetime.now() - date_time < timedelta(minutes=args.days):
             continue
 
-        logging.info(path)
+        logging.info(f"Removing {path}")
+
         if args.dry_run:
             continue
         elif args.trash:
-            subprocess.run(["trash", path])
+            send2trash(path)
         elif args.remove:
             os.remove(path)
         else:
