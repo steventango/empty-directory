@@ -43,7 +43,7 @@ def main():
 
         logging.info(f"{path} [{date_time}]")
 
-        if start_date and date_time < start_date or datetime.now() - date_time < timedelta(minutes=args.days):
+        if start_date and date_time < start_date or datetime.now() - date_time < timedelta(days=args.days):
             continue
 
         logging.info(f"Removing {path}")
